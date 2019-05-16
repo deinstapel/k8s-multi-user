@@ -1,0 +1,107 @@
+{{- $ca := genCA "multi-authn-ca" 1800 -}}
+{{- $altNames := list (printf "%s-ns-webhook.kube-system.svc" .Release.Name) -}}
+{{- $name := printf "%s-ns-webhook" .Release.Name -}}
+{{- $cert := genSignedCert $name nil $altNames 1800 $ca -}}
+
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/tls
+metadata:
+  name: {{ .Release.Name }}-ns-webhook-cert
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  tls.crt: "{{ $cert.Cert | b64enc }}"
+  tls.key: "{{ $cert.Key | b64enc }}"
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ns-webhook
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+      app.kubernetes.io/managed-by: {{ .Release.Service }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+        app.kubernetes.io/managed-by: {{ .Release.Service }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: ns-webhook
+        image: docker.pattig.rocks/public/k8s-namespace-create-admission-webhook:latest
+        ports:
+        - containerPort: 6443
+        env:
+        - name: CERT_CRT
+          value: /certs/tls.crt
+        - name: CERT_KEY
+          value: /certs/tls.key
+        volumeMounts:
+        - name: cert
+          mountPath: /certs
+      volumes:
+      - name: cert
+        secret:
+          secretName: {{ .Release.Name }}-ns-webhook-cert
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ns-webhook
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 6443
+  selector:
+    app.kubernetes.io/name: {{ .Chart.Name }}-ns-webhook
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+---
+
+apiVersion: admissionregistration.k8s.io/v1beta1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: {{ .Release.Name }}-ns-webhook
+webhooks:
+- name: private-ns.deinstapel.de
+  rules:
+  - apiGroups:
+    - ""
+    apiVersions:
+    - v1
+    operations:
+    - CREATE
+    resources:
+    - namespaces
+    scope: "Cluster"
+  clientConfig:
+    service:
+      namespace: kube-system
+      name: {{ .Release.Name }}-ns-webhook
+    caBundle: "{{ $ca.Cert | b64enc }}"
+  admissionReviewVersions:
+  - v1beta1
+  timeoutSeconds: 1

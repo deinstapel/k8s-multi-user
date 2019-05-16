@@ -1,0 +1,13 @@
+name: multi-authn
+home: https://www.deinstapel.de
+version: 1.0.0
+appVersion: 1.0.0
+description: A chart to generate service accounts and role bindings for users.
+keywords:
+- authentication
+sources:
+- https://git.pattig.rocks/mkoppehel/multi-authn.git
+maintainers:
+- name: martin31821
+  email: martin@deinstapel.de
+engine: gotpl

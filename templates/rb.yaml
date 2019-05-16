@@ -1,0 +1,33 @@
+{{ $Values := .Values }}
+{{ $Release := .Release }}
+
+{{- range $userIndex, $user := $Values.users }}
+  {{- range $userRoleIndex, $userRole := $user.roles }}
+    {{- range $roleIndex, $role := $Values.roles }}
+      {{- if eq $role.name $userRole }}
+# ----------------------------------
+# Generate RB for:
+# User: '{{ $user.name }}'
+# Role: '{{ $role.name }}'
+{{- range $nsIndex, $ns := $role.namespaces }}
+# Namespace: '{{ $ns }}'
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "{{ $user.name }}-{{ $ns }}-{{ $role.name }}"
+  namespace: "{{ $ns }}"
+subjects:
+- kind: ServiceAccount
+  name: "k8s-user-{{ $user.name }}"
+  namespace: "kube-system"
+roleRef:
+  kind: ClusterRole
+  name: admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+{{- end }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,21 @@
+users:
+- name: A
+  roles:
+  - shared-A
+- name: B
+  roles:
+  - shared-A
+- name: C
+- name: D
+  roles:
+  - shared-A
+  - shared-B
+
+roles:
+- name: shared-A
+  namespaces:
+  - shared-ns-a-foo
+  - shared-ns-a-bar
+- name: shared-B
+  namespaces:
+  - fancy-ns-b
