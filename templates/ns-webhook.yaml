@@ -43,7 +43,7 @@ spec:
     spec:
       containers:
       - name: ns-webhook
-        image: docker.pattig.rocks/public/k8s-namespace-create-admission-webhook:latest
+        image: deinstapel/k8s-namespace-create-admission-webhook:latest
         ports:
         - containerPort: 6443
         env:
