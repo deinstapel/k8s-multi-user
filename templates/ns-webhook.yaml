@@ -43,7 +43,7 @@ spec:
     spec:
       containers:
       - name: ns-webhook
-        image: deinstapel/k8s-namespace-create-admission-webhook:latest
+        image: {{ .Values.createAdmissionWebhookImage }}
         ports:
         - containerPort: 6443
         env:

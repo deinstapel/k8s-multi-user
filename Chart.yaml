@@ -1,7 +1,7 @@
 name: multi-authn
 home: https://www.deinstapel.de
-version: 1.0.0
-appVersion: 1.0.0
+version: 1.0.1
+appVersion: 1.0.1
 description: A chart to generate service accounts and role bindings for users.
 keywords:
 - authentication

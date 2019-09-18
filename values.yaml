@@ -19,3 +19,6 @@ roles:
 - name: shared-B
   namespaces:
   - fancy-ns-b
+
+createAdmissionWebhookImage: deinstapel/k8s-namespace-create-admission-webhook:0.2.0
+namespaceRoleBindingImage: deinstapel/k8s-namespace-role-binding:0.1.1
